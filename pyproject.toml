@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "scikit-extensions"
+version = "0.1.0"
+description = "\"A collection of Scikit-learn-compatible transformers for feature engineering, preprocessing, and pipeline utilities.\""
+authors = ["sh99 <shriramh99@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+packages = [{ include = "skext" }]
+homepage = "https://github.com/your-username/scikit-extensions"
+repository = "https://github.com/your-username/scikit-extensions"
+keywords = ["scikit-learn", "transformers", "preprocessing", "pipeline"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Framework :: Scikit-Learn",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+scikit-learn = "^1.7.2"
+pandas = "^2.3.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0"
+black = "^23.0"
+ruff = "^0.1.0"
+mypy = "^1.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
