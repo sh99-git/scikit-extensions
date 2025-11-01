@@ -2,8 +2,8 @@
 
 [![PyPI version](https://badge.fury.io/py/scikit-extensions.svg)](https://badge.fury.io/py/scikit-extensions)
 [![Python](https://img.shields.io/pypi/pyversions/scikit-extensions.svg)](https://pypi.org/project/scikit-extensions/)
-[![Tests](https://github.com/sh99/scikit-extensions/workflows/Tests/badge.svg)](https://github.com/sh99/scikit-extensions/actions)
-[![Coverage](https://codecov.io/gh/sh99/scikit-extensions/branch/main/graph/badge.svg)](https://codecov.io/gh/sh99/scikit-extensions)
+[![Tests](https://github.com/sh99-git/scikit-extensions/workflows/Tests/badge.svg)](https://github.com/sh99-git/scikit-extensions/actions)
+[![Coverage](https://codecov.io/gh/sh99-git/scikit-extensions/branch/main/graph/badge.svg)](https://codecov.io/gh/sh99-git/scikit-extensions)
 
 A collection of Scikit-learn-compatible transformers for feature engineering, preprocessing, and pipeline utilities.
 
@@ -80,7 +80,7 @@ transformed = mlb.fit_transform(data)
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/sh99/scikit-extensions.git
+git clone https://github.com/sh99-git/scikit-extensions.git
 cd scikit-extensions
 ```
 

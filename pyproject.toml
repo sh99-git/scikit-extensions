@@ -6,8 +6,8 @@ authors = ["sh99 <shriramh99@gmail.com>"]
 readme = "README.md"
 license = "MIT"
 packages = [{ include = "skext" }]
-homepage = "https://github.com/sh99/scikit-extensions"
-repository = "https://github.com/sh99/scikit-extensions"
+homepage = "https://github.com/sh99-git/scikit-extensions"
+repository = "https://github.com/sh99-git/scikit-extensions"
 keywords = ["scikit-learn", "transformers", "preprocessing", "pipeline"]
 classifiers = [
     "Programming Language :: Python :: 3",
