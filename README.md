@@ -20,10 +20,10 @@ poetry add scikit-extensions
 A scikit-learn compatible wrapper for statsmodels OLS regression that provides additional statistical insights.
 
 ```python
-from skext.linear_model import StatsModelsOLS
+from skext.linear_model import OLSRegressor
 
 # Create and fit model
-model = StatsModelsOLS(fit_intercept=True)
+model = OLSRegressor(fit_intercept=True)
 model.fit(X, y)
 
 # Get predictions
