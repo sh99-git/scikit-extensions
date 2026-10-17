@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
-class MulticollinearityRemover(BaseEstimator, TransformerMixin):
+class MultiCollinearityReducer(BaseEstimator, TransformerMixin):
     """
     Transformer to remove multicollinearity by dropping highly correlated features.
     

@@ -1,42 +1,43 @@
-[tool.poetry]
+[project]
 name = "scikit-extensions"
 version = "0.1.3"
 description = "A collection of Scikit-learn-compatible transformers for feature engineering, preprocessing, and pipeline utilities."
-authors = ["sh99 <shriramh99@gmail.com>"]
+authors = [{ name = "sh99", email = "shriramh99@gmail.com" }]
 readme = "README.md"
 license = "MIT"
-packages = [{ include = "skext" }]
-homepage = "https://github.com/sh99-git/scikit-extensions"
-repository = "https://github.com/sh99-git/scikit-extensions"
+requires-python = ">=3.10,<3.14"
 keywords = ["scikit-learn", "transformers", "preprocessing", "pipeline"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
+dependencies = [
+    "scikit-learn>=1.7.2,<2.0.0",
+    "pandas>=2.3.2,<3.0.0",
+    "statsmodels>=0.14.5,<0.15.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.14"
-scikit-learn = "^1.7.2"
-pandas = "^2.3.2"
-statsmodels = "^0.14.5"
+[project.urls]
+Homepage = "https://github.com/sh99-git/scikit-extensions"
+Repository = "https://github.com/sh99-git/scikit-extensions"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.0"
-pytest-cov = "^4.1.0"
-black = "^23.0"
-ruff = "^0.1.0"
-mypy = "^1.7"
+[dependency-groups]
+dev = [
+    "pytest>=7.0,<8.0",
+    "pytest-cov>=4.1.0,<5.0.0",
+    "black>=23.0,<24.0",
+    "ruff>=0.1.0,<0.2.0",
+    "mypy>=1.7,<2.0",
+]
 
 [build-system]
-requires = [
-    "poetry-core",
-    "pytest",
-    "pytest-cov"
-]
-build-backend = "poetry.core.masonry.api"
-build-hooks = ["build.py:build_hook"]
+requires = ["uv_build>=0.8.0,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "skext"
+module-root = ""
 
 [tool.pytest.ini_options]
 minversion = "7.0"

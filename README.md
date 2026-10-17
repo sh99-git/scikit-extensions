@@ -13,9 +13,9 @@ A collection of Scikit-learn-compatible transformers for feature engineering, pr
 pip install scikit-extensions
 ```
 
-Or with Poetry:
+Or with uv:
 ```bash
-poetry add scikit-extensions
+uv add scikit-extensions
 ```
 
 ## Features
@@ -86,7 +86,7 @@ cd scikit-extensions
 
 2. Install dependencies:
 ```bash
-poetry install
+uv sync
 ```
 
 ### Running Tests
