@@ -1,6 +1,6 @@
 [project]
 name = "scikit-extensions"
-version = "0.2.3"
+version = "0.2.4"
 description = "A collection of Scikit-learn-compatible transformers for feature engineering, preprocessing, and pipeline utilities."
 authors = [{ name = "sh99", email = "shriramh99@gmail.com" }]
 readme = "README.md"
