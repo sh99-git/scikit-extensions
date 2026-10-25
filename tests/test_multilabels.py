@@ -23,6 +23,43 @@ def test_multilabel_basic():
               for col in ['tags__a', 'tags__b', 'tags__c',
                          'categories__x', 'categories__y', 'categories__z'])
 
+
+def test_multilabel_delimited_strings():
+    X = pd.DataFrame({'tags': ['a, b', 'b,c', '', 'a,,c']})
+
+    transformed = MultiLabelBinarizerTransformer().fit_transform(X)
+
+    assert transformed.columns.tolist() == ['tags__a', 'tags__b', 'tags__c']
+    assert transformed.values.tolist() == [
+        [1, 1, 0],
+        [0, 1, 1],
+        [0, 0, 0],
+        [1, 0, 1],
+    ]
+
+
+def test_multilabel_custom_delimiter():
+    X = pd.DataFrame({'tags': ['red|blue', 'blue|green']})
+
+    transformed = MultiLabelBinarizerTransformer(delimiter='|').fit_transform(X)
+
+    assert transformed.columns.tolist() == [
+        'tags__blue', 'tags__green', 'tags__red'
+    ]
+    assert transformed.values.tolist() == [[1, 0, 1], [1, 1, 0]]
+
+
+def test_multilabel_fit_transform_mixed_cell_formats():
+    training_data = pd.DataFrame({'tags': ['a, b', ['b', 'c']]})
+    test_data = pd.DataFrame({'tags': [['c', 'a'], 'b, c']})
+    transformer = MultiLabelBinarizerTransformer().fit(training_data)
+
+    transformed = transformer.transform(test_data)
+
+    assert transformed.columns.tolist() == ['tags__a', 'tags__b', 'tags__c']
+    assert transformed.values.tolist() == [[1, 0, 1], [0, 1, 1]]
+
+
 def test_multilabel_sparse():
     X = pd.DataFrame({
         'tags': [['a', 'b'], ['b', 'c'], ['a'], []]

@@ -76,6 +76,15 @@ mlb = MultiLabelBinarizerTransformer(sparse_output=False)
 transformed = mlb.fit_transform(data)
 ```
 
+Each column can contain label iterables or delimiter-separated strings. String
+values are split on commas by default; pass `delimiter` to use another separator.
+
+```python
+data = pd.DataFrame({'tags': ['python|ml', 'python', 'ml|deep-learning']})
+mlb = MultiLabelBinarizerTransformer(delimiter='|')
+transformed = mlb.fit_transform(data)
+```
+
 ## Development
 
 1. Clone the repository:

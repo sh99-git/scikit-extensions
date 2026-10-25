@@ -9,23 +9,27 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
     """
     A custom transformer that wraps sklearn's MultiLabelBinarizer to integrate seamlessly into scikit-learn pipelines.
 
-    This transformer converts a collection of label sets (iterables of iterables) into a binary indicator matrix.
-    It is particularly useful for multi-label classification tasks where each sample can belong to multiple classes.
+    This transformer converts columns containing label iterables or delimiter-separated
+    strings into a binary indicator matrix. String values are split using ``delimiter``.
+    It is particularly useful for multi-label classification tasks where each sample
+    can belong to multiple classes.
 
     Parameters
     ----------
     sparse_output : bool, default=False
         If True, the output will be a sparse matrix in Compressed Sparse Row (CSR) format. Otherwise, a dense NumPy array is returned.
+    delimiter : str, default=","
+        Delimiter used to split string values in input columns.
 
     Attributes
     ----------
-    mlbs : dict
+    mlbs_ : dict
         A dictionary mapping column names to fitted MultiLabelBinarizer instances.
-    feature_names_in_ : list
-        List of input feature names (column names) during fitting.
+    feature_names_in_ : ndarray of shape (n_features_in_,)
+        Input feature names seen during fitting, when all column names are strings.
     """
 
-    def __init__(self, sparse_output=False):
+    def __init__(self, sparse_output=False, delimiter=","):
         """
         Initializes the transformer with the specified parameters.
 
@@ -33,8 +37,18 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         ----------
         sparse_output : bool, default=False
             If True, the output will be a sparse matrix in Compressed Sparse Row (CSR) format. Otherwise, a dense NumPy array is returned.
+        delimiter : str, default=","
+            Delimiter used to split string values in input columns.
         """
         self.sparse_output = sparse_output
+        self.delimiter = delimiter
+
+    def _prepare_column(self, values):
+        return values.map(
+            lambda value: [label.strip() for label in value.split(self.delimiter) if label.strip()]
+            if isinstance(value, str)
+            else value
+        )
 
     def fit(self, X, y=None):
         """
@@ -43,7 +57,8 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : pandas DataFrame of shape (n_samples, n_features)
-            A collection of label sets, where each set contains the labels for a single sample.
+            Each column contains label iterables or delimiter-separated strings,
+            where each cell contains the labels for one sample.
 
         y : None
             Ignored. This parameter exists for compatibility with scikit-learn pipelines.
@@ -62,7 +77,9 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         elif hasattr(self, "feature_names_in_"):
             del self.feature_names_in_
         self.mlbs_ = {
-            col: MultiLabelBinarizer(sparse_output=self.sparse_output).fit(X[col])
+            col: MultiLabelBinarizer(sparse_output=self.sparse_output).fit(
+                self._prepare_column(X[col])
+            )
             for col in self.input_columns_
         }
         return self
@@ -74,7 +91,8 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : pandas DataFrame of shape (n_samples, n_features)
-            A collection of label sets to transform.
+            Each column contains label iterables or delimiter-separated strings,
+            where each cell contains the labels for one sample.
 
         Returns
         -------
@@ -90,7 +108,7 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         transformed_parts = []
         for col in self.input_columns_:
             mlb = self.mlbs_[col]
-            part = mlb.transform(X[col])
+            part = mlb.transform(self._prepare_column(X[col]))
             if not self.sparse_output:
                 part = pd.DataFrame(
                     part,
