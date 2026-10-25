@@ -35,8 +35,6 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
             If True, the output will be a sparse matrix in Compressed Sparse Row (CSR) format. Otherwise, a dense NumPy array is returned.
         """
         self.sparse_output = sparse_output
-        self.mlbs = {}
-        self.feature_names_in_ = None
 
     def fit(self, X, y=None):
         """
@@ -57,10 +55,15 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         """
         if not isinstance(X, pd.DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
-        self.feature_names_in_ = X.columns.tolist()
-        self.mlbs = {
+        self.input_columns_ = list(X.columns)
+        self.n_features_in_ = X.shape[1]
+        if all(isinstance(column, str) for column in X.columns):
+            self.feature_names_in_ = np.asarray(X.columns, dtype=object)
+        elif hasattr(self, "feature_names_in_"):
+            del self.feature_names_in_
+        self.mlbs_ = {
             col: MultiLabelBinarizer(sparse_output=self.sparse_output).fit(X[col])
-            for col in self.feature_names_in_
+            for col in self.input_columns_
         }
         return self
 
@@ -80,9 +83,13 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         """
         if not isinstance(X, pd.DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
+        if not hasattr(self, "mlbs_"):
+            raise ValueError("Transformer has not been fitted yet.")
+        if list(X.columns) != self.input_columns_:
+            raise ValueError("Input columns must match the columns seen during fit.")
         transformed_parts = []
-        for col in self.feature_names_in_:
-            mlb = self.mlbs[col]
+        for col in self.input_columns_:
+            mlb = self.mlbs_[col]
             part = mlb.transform(X[col])
             if not self.sparse_output:
                 part = pd.DataFrame(
@@ -91,7 +98,7 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
                     index=X.index
                 )
             transformed_parts.append(part)
-        return hstack(transformed_parts) if self.sparse_output else pd.concat(transformed_parts, axis=1)
+        return hstack(transformed_parts, format="csr") if self.sparse_output else pd.concat(transformed_parts, axis=1)
 
     def inverse_transform(self, X):
         """
@@ -107,24 +114,31 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         inverse_transformed : pandas DataFrame of shape (n_samples, n_features)
             A DataFrame where each column contains the original label sets for each sample.
         """
+        if not hasattr(self, "mlbs_"):
+            raise ValueError("Transformer has not been fitted yet.")
         if self.sparse_output and not issparse(X):
             raise ValueError("Expected sparse input for inverse_transform but got dense.")
-        if not self.sparse_output and isinstance(X, np.ndarray):
-            X = pd.DataFrame(X, columns=self.get_feature_names_out())
+        if not self.sparse_output:
+            X = np.asarray(X)
         result = {}
         if self.sparse_output:
             current_col = 0
-            for col in self.feature_names_in_:
-                mlb = self.mlbs[col]
+            for col in self.input_columns_:
+                mlb = self.mlbs_[col]
                 n_classes = len(mlb.classes_)
                 col_slice = X[:, current_col:current_col + n_classes]
-                result[col] = mlb.inverse_transform(col_slice)
+                result[col] = [list(labels) for labels in mlb.inverse_transform(col_slice)]
                 current_col += n_classes
         else:
-            for col in self.feature_names_in_:
-                mlb = self.mlbs[col]
-                col_data = X[[f"{col}__{cls}" for cls in mlb.classes_]]
-                result[col] = mlb.inverse_transform(col_data.values)
+            current_col = 0
+            for col in self.input_columns_:
+                mlb = self.mlbs_[col]
+                n_classes = len(mlb.classes_)
+                result[col] = [
+                    list(labels)
+                    for labels in mlb.inverse_transform(X[:, current_col:current_col + n_classes])
+                ]
+                current_col += n_classes
         return pd.DataFrame(result)
 
     def get_feature_names_out(self, input_features=None):
@@ -141,11 +155,20 @@ class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
         feature_names_out : list of str
             The output feature names.
         """
+        if not hasattr(self, "mlbs_"):
+            raise ValueError("Transformer has not been fitted yet.")
         if input_features is None:
-            input_features = self.feature_names_in_
+            input_features = getattr(
+                self,
+                "feature_names_in_",
+                np.asarray([f"x{i}" for i in range(self.n_features_in_)], dtype=object),
+            )
+        elif hasattr(self, "feature_names_in_") and not np.array_equal(
+            input_features, self.feature_names_in_
+        ):
+            raise ValueError("input_features must match feature_names_in_ when feature names are available.")
         out = []
-        for col in input_features:
-            mlb = self.mlbs.get(col)
-            if mlb:
-                out.extend([f"{col}__{cls}" for cls in mlb.classes_])
-        return out
+        for col, fitted_col in zip(input_features, self.input_columns_):
+            mlb = self.mlbs_[fitted_col]
+            out.extend([f"{col}__{cls}" for cls in mlb.classes_])
+        return np.asarray(out, dtype=object)

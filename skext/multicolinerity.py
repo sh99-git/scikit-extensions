@@ -31,8 +31,6 @@ class MultiCollinearityReducer(BaseEstimator, TransformerMixin):
         self.correlation_threshold = correlation_threshold
         self.strategy = strategy
         self.random_state = random_state
-        self.selected_features_ = None
-        self.feature_correlations_ = None
     
     def _select_by_variance(self, X, features):
         """Select feature with highest variance from group"""
@@ -74,6 +72,18 @@ class MultiCollinearityReducer(BaseEstimator, TransformerMixin):
         """
         # Convert to DataFrame if needed
         X_ = X.copy() if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
+        self.n_features_in_ = X_.shape[1]
+        if isinstance(X, pd.DataFrame):
+            self.input_columns_ = list(X.columns)
+            if all(isinstance(column, str) for column in X.columns):
+                self.feature_names_in_ = np.asarray(X.columns, dtype=object)
+            elif hasattr(self, "feature_names_in_"):
+                del self.feature_names_in_
+        else:
+            self.input_columns_ = [f"x{i}" for i in range(X_.shape[1])]
+            X_.columns = self.input_columns_
+            if hasattr(self, "feature_names_in_"):
+                del self.feature_names_in_
         
         # Calculate correlation matrix
         corr_matrix = X_.corr().abs()
@@ -129,12 +139,24 @@ class MultiCollinearityReducer(BaseEstimator, TransformerMixin):
         pandas.DataFrame
             Transformed data with selected features only
         """
-        if self.selected_features_ is None:
+        if not hasattr(self, "selected_features_"):
             raise ValueError("Transformer has not been fitted yet.")
-            
-        X_ = X.copy() if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
+
+        X_ = X.copy() if isinstance(X, pd.DataFrame) else pd.DataFrame(X, columns=self.input_columns_)
+        if X_.shape[1] != self.n_features_in_:
+            raise ValueError("X has a different number of features than during fit.")
+        if isinstance(X, pd.DataFrame) and list(X.columns) != self.input_columns_:
+            raise ValueError("Input columns must match the columns seen during fit.")
         return X_[self.selected_features_]
     
     def get_feature_names_out(self, input_features=None):
         """Return feature names for output features."""
-        return np.array(self.selected_features_)
+        if not hasattr(self, "selected_features_"):
+            raise ValueError("Transformer has not been fitted yet.")
+        if input_features is not None and hasattr(self, "feature_names_in_"):
+            if not np.array_equal(input_features, self.feature_names_in_):
+                raise ValueError("input_features must match feature_names_in_ when feature names are available.")
+        return np.asarray(self.selected_features_, dtype=object)
+
+
+MulticollinearityRemover = MultiCollinearityReducer
