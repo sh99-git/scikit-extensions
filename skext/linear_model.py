@@ -39,12 +39,15 @@ class OLSRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
+        input_feature_names = X.columns.tolist() if isinstance(X, pd.DataFrame) else None
+
         # Check input data
         X, y = check_X_y(X, y, y_numeric=True)
         
         # Convert to DataFrame to preserve feature names
-        if isinstance(X, pd.DataFrame):
-            self.feature_names_ = X.columns.tolist()
+        if input_feature_names is not None:
+            self.feature_names_ = input_feature_names
+            X = pd.DataFrame(X, columns=self.feature_names_)
         else:
             self.feature_names_ = [f'x{i}' for i in range(X.shape[1])]
             X = pd.DataFrame(X, columns=self.feature_names_)
@@ -98,14 +101,15 @@ class OLSRegressor(BaseEstimator, RegressorMixin):
         """Return model coefficients (excluding intercept)."""
         if self.results_ is None:
             raise ValueError("Model not fitted. Call 'fit' first.")
-        return self.results_.params[1:] if self.fit_intercept else self.results_.params
+        params = np.asarray(self.results_.params)
+        return params[1:] if self.fit_intercept else params
     
     @property
     def intercept_(self):
         """Return intercept value."""
         if self.results_ is None:
             raise ValueError("Model not fitted. Call 'fit' first.")
-        return self.results_.params[0] if self.fit_intercept else 0.0
+        return np.asarray(self.results_.params)[0] if self.fit_intercept else 0.0
     
     def summary(self):
         """Return statsmodels summary object."""
